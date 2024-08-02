@@ -40,53 +40,43 @@
 
         public void Write(string text, Alignment alignment)
         {
-            if (text.Length > FixedLength)
-                throw new ArgumentOutOfRangeException(nameof(text), "The length of the text is greater than the fixed length.");
-
-            Console.SetCursorPosition(StartPosition.Left, StartPosition.Top);
-            foreach (string s in GetStringParts(text, alignment))
-            {
-                Console.Write(s);
-            }
+            DefaultTextProvider textProvider = new DefaultTextProvider(text, alignment, FixedLength);
+            Write(textProvider);
         }
 
         public void Write(string text, Alignment alignment, bool returnCursorPosition)
         {
+            DefaultTextProvider textProvider = new DefaultTextProvider(text, alignment, FixedLength);
+            Write(textProvider, returnCursorPosition);
+        }
+
+        public void Write(ITextProvider textProvider)
+        {
+            if (textProvider.OriginalText.Length > FixedLength)
+                throw new ArgumentOutOfRangeException(nameof(textProvider.OriginalText), "The length of the text is greater than the fixed length.");
+
+            Console.SetCursorPosition(StartPosition.Left, StartPosition.Top);
+
+            ConsoleColor original = Console.ForegroundColor;
+            foreach (ConsoleText cText in textProvider.GetStringParts())
+            {
+                Console.ForegroundColor = cText.Color;
+                Console.Write(cText.Text);
+            }
+            Console.ForegroundColor = original;
+        }
+
+        public void Write(ITextProvider textProvider, bool returnCursorPosition)
+        {
             if (returnCursorPosition)
             {
                 var originalPos = Console.GetCursorPosition();
-                Write(text, alignment);
+                Write(textProvider);
                 Console.SetCursorPosition(originalPos.Left, originalPos.Top);
             }
             else
             {
-                Write(text, alignment);
-            }
-        }
-
-        #endregion
-
-        #region - Private Methods -
-
-        private IEnumerable<string> GetStringParts(string text, Alignment alignment)
-        {
-            int diff = FixedLength - text.Length;
-            if (alignment == Alignment.Right && diff > 0)
-            {
-                foreach (string s in Enumerable.Repeat(" ", diff))
-                {
-                    yield return s;
-                }
-            }
-
-            yield return text;
-
-            if (alignment == Alignment.Left && diff > 0)
-            {
-                foreach (string s in Enumerable.Repeat(" ", diff))
-                {
-                    yield return s;
-                }
+                Write(textProvider);
             }
         }
 
