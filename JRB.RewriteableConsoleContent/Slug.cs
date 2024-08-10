@@ -80,6 +80,31 @@
             }
         }
 
+        public void ModifyCursorPosition(int top = 0, int left = 0)
+        {
+            if (left == 0 && top == 0)
+                return;
+
+            int finalLeft = StartPosition.Left;
+            int finalTop = StartPosition.Top;
+
+            if (left != 0)
+            {
+                finalLeft += left;
+                if (finalLeft < 0)
+                    throw new ArgumentException($"The value of the {nameof(left)} parameter ({left}) would make the starting position for {nameof(StartPosition.Left)} less than zero, which is not possible.", nameof(left));
+            }
+
+            if (top != 0)
+            {
+                finalTop += top;
+                if (finalTop < 0)
+                    throw new ArgumentException($"The value of the {nameof(top)} parameter ({top}) would make the starting position for {nameof(StartPosition.Top)} less than zero, which is not possible.", nameof(top));
+            }
+
+            StartPosition = new ConsolePosition(finalTop, finalLeft);
+        }
+
         #endregion
 
     }

@@ -9,50 +9,65 @@ namespace JRB.RewriteableConsoleContent.TestConsole
         static void Main(string[] args)
         {
             const int FIELD_LENGTH = 3;
-            List<IncrementDisplay> displays = new List<IncrementDisplay>()
+
+            foreach (int i in Enumerable.Range(0, 12))
+            {
+                WriteAlphabet();
+            }
+
+            List<IPlaceholder> lstPlaceholders = new List<IPlaceholder>()
             {
                 new IncrementDisplay(1, FIELD_LENGTH),
                 new IncrementDisplay(2, FIELD_LENGTH),
                 new IncrementDisplay(3, FIELD_LENGTH),
                 new IncrementDisplay(4, FIELD_LENGTH),
-                new IncrementDisplay(5, FIELD_LENGTH)
+                new IncrementDisplay(5, FIELD_LENGTH),
+                new ColorSplashSlug("Test1"),
+                new ColorSplashSlug("Test2"),
+                new ColorSplashSlug("Test3"),
+                new ColorSplashSlug("Test4"),
+                new ColorSplashSlug("Test5")
             };
-
-            displays.ForEach(d =>
+            
+            for (int i = 0; i < lstPlaceholders.Count; i++)
             {
-                d.CreateHere();
+                var beforePosition = Console.GetCursorPosition();
+                lstPlaceholders[i].CreateHere();
                 Console.WriteLine();
-            });
+                var afterPosition = Console.GetCursorPosition();
 
-            ColorSplashSlug colorSplashSlug = GetColorSplashSlug("This is some color splash text.");
-            colorSplashSlug.CreateHere();
-            Console.WriteLine();
+                if (beforePosition.Top < afterPosition.Top)
+                    continue;
 
-            Console.WriteLine("Press any key to increment the multipliers.");
+                for (int j = 0; j <= i; j++)
+                {
+                    lstPlaceholders[j].ModifyPosition(top: -1);
+                }
+            }
+
             while (true)
             {
                 Console.ReadKey(true);
-                displays.ForEach(d => d.Increment());
-                colorSplashSlug.Increment();
+                lstPlaceholders.ForEach(f => f.Increment());
             }
         }
 
-        static ColorSplashSlug GetColorSplashSlug(string originalText)
+        static void WriteAlphabet()
         {
-            ColorSplashBehavior behavior = ColorSplashBehavior.Random;
-            ConsoleColor initialColor = Console.ForegroundColor;
-            List<ConsoleColor> colors = new List<ConsoleColor>()
+            for (int i = (int)'a'; i <= (int)'z'; i++)
             {
-                ConsoleColor.Yellow,
-                ConsoleColor.Green,
-                ConsoleColor.Red,
-                ConsoleColor.Blue,
-                ConsoleColor.Cyan
-            };
-            return new ColorSplashSlug(originalText, behavior, initialColor, colors, 3);
+                Console.WriteLine((char)i);
+            }
         }
 
-        class IncrementDisplay
+        interface IPlaceholder
+        {
+            void CreateHere();
+            void Increment();
+            void ModifyPosition(int top = 0, int left = 0);
+        }
+
+        class IncrementDisplay : IPlaceholder
         {
 
             private int _multiplier;
@@ -89,6 +104,14 @@ namespace JRB.RewriteableConsoleContent.TestConsole
                 UpdateSlugText(text, true);
             }
 
+            public void ModifyPosition(int top = 0, int left = 0)
+            {
+                if (_slug != null)
+                {
+                    _slug.ModifyCursorPosition(top, left);
+                }
+            }
+
             private void UpdateSlugText(string text, bool returnCursorPosition)
             {
                 string s = (text.Length > _slug?.FixedLength) ? text.Substring(text.Length - _slug.FixedLength) : text;
@@ -97,18 +120,30 @@ namespace JRB.RewriteableConsoleContent.TestConsole
 
         }
 
-        class ColorSplashSlug
+        sealed class ColorSplashSlug : IPlaceholder
         {
 
             private string _originalText;
-            private ColorSplashTextProvider _textProvider;
+            private ITextProvider _textProvider;
             private Slug? _slug;
 
-            public ColorSplashSlug(string originalText, ColorSplashBehavior behavior, ConsoleColor initialColor, IEnumerable<ConsoleColor> colors, int? turnsUntilAllHaveColor)
+            public ColorSplashSlug(string originalText)
             {
                 _originalText = originalText;
-                ColorSplashBase colorSplash = ColorSplashFactory.Create(originalText, behavior, initialColor, colors, turnsUntilAllHaveColor);
-                _textProvider = new ColorSplashTextProvider(originalText, Alignment.Left, originalText.Length, colorSplash);
+
+                ColorSplashBase colorSplash = ColorSplashFactory.Create(originalText, ColorSplashBehavior.Random, Console.ForegroundColor, GetColors(), 5);
+                ITextProvider textProvider = new ColorSplashTextProvider(originalText, Alignment.Left, originalText.Length, colorSplash);
+                _textProvider = textProvider;
+            }
+
+            private static IEnumerable<ConsoleColor> GetColors()
+            {
+                //yield return ConsoleColor.Yellow;
+                //yield return ConsoleColor.Green;
+                //yield return ConsoleColor.Red;
+                //yield return ConsoleColor.Blue;
+                //yield return ConsoleColor.Cyan;
+                yield return ConsoleColor.White;
             }
 
             public void CreateHere()
@@ -128,7 +163,66 @@ namespace JRB.RewriteableConsoleContent.TestConsole
                 _slug.Write(_textProvider, true);
             }
 
+            public void ModifyPosition(int top = 0, int left = 0)
+            {
+                if (_slug != null)
+                {
+                    _slug.ModifyCursorPosition(top, left);
+                }
+            }
+
         }
+
+        #region - Nested Classes -
+
+        public sealed class FacialPlaceholder
+        {
+
+            private ColorSplashTextProvider _textProvider;
+            private Slug _slug;
+
+            private FacialPlaceholder(string text, ColorSplashTextProvider textProvider, Slug slug, int totalSplashes)
+            {
+                this.Text = text;
+                this.TotalSplashes = totalSplashes;
+
+                _textProvider = textProvider;
+                _slug = slug;
+            }
+
+            public string Text { get; private set; }
+            public int TotalSplashes { get; private set; }
+
+            public static FacialPlaceholder CreateHere(string ladyName, int totalSplashes)
+            {
+                ColorSplashTextProvider textProvider = GetTextProvider(ladyName, totalSplashes);
+                Slug slug = Slug.CreateHere(ladyName.Length);
+                slug.Write(textProvider, false);
+
+                return new FacialPlaceholder(ladyName, textProvider, slug, totalSplashes);
+            }
+
+            private static ColorSplashTextProvider GetTextProvider(string ladyName, int totalSplashes)
+            {
+                ColorSplashBase colorSplash = ColorSplashFactory.Create(ladyName, ColorSplashBehavior.Random, ConsoleColor.Gray, GetColors(), totalSplashes);
+                return new ColorSplashTextProvider(ladyName, Alignment.Left, ladyName.Length, colorSplash);
+            }
+
+            private static IEnumerable<ConsoleColor> GetColors()
+            {
+                yield return ConsoleColor.White;
+            }
+
+            public bool IsDone() => _textProvider.AllCharactersColorSet();
+
+            public void Increment()
+            {
+                _slug.Write(_textProvider, true);
+            }
+
+        }
+
+        #endregion
 
     }
 }
