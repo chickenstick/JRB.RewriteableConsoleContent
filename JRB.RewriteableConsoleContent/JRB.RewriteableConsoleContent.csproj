@@ -8,8 +8,4 @@
     <AssemblyVersion>1.2.0</AssemblyVersion>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="JRB.Randomizer" Version="1.0.1" />
-  </ItemGroup>
-
 </Project>

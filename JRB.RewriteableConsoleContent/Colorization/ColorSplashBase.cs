@@ -15,7 +15,7 @@ namespace JRB.RewriteableConsoleContent.Colorization
         protected bool _writtenOnce;
         private int _colorIndex;
 
-        private IReadOnlyList<IndexColor> _indexColors;
+        private IndexColor[] _indexColors;
 
         #endregion
 
@@ -41,11 +41,11 @@ namespace JRB.RewriteableConsoleContent.Colorization
 
             if (TrackIndividualChars)
             {
-                _indexColors = GetNonWhitespaceIndexColors().ToList();
+                _indexColors = GetNonWhitespaceIndexColors().ToArray();
             }
             else
             {
-                _indexColors = new List<IndexColor>();
+                _indexColors = new IndexColor[0];
             }
         }
 

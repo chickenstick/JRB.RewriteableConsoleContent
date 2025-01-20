@@ -4,8 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using JRB.Randomizer;
-
 namespace JRB.RewriteableConsoleContent.Colorization
 {
     public class RandomColorSplash : ColorSplashBase
@@ -75,13 +73,13 @@ namespace JRB.RewriteableConsoleContent.Colorization
             if (!IndexColors.Any())
                 return new Queue<List<IndexColor>>();
 
-            List<IndexColor> list = IndexColors.ToList();
-            Randomizer.Randomizer.Shuffle(list);
+            IndexColor[] array = [.. IndexColors];
+            Random.Shared.Shuffle(array);
 
             Queue<List<IndexColor>> queue = new Queue<List<IndexColor>>();
-            for (int i = 0; i < list.Count; i += _charsPerTurn)
+            for (int i = 0; i < array.Length; i += _charsPerTurn)
             {
-                queue.Enqueue(list.Skip(i).Take(_charsPerTurn).ToList());
+                queue.Enqueue(array.Skip(i).Take(_charsPerTurn).ToList());
             }
             return queue;
         }
